@@ -1,0 +1,234 @@
+---
+title: "Task-3 EDA Retail"
+author: "Shashwat Patel"
+date: "05/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message = FALSE)
+
+```
+# **Attaching the packages**
+```{r}
+library(tidyverse)
+library(GGally)
+library(gridExtra)
+```
+
+# **Read the data**
+
+```{r}
+data<-read.csv("SampleSuperstore.csv")
+```
+
+
+
+```{r}
+head(data)
+```
+
+# **Basic summary of the data**
+
+```{r}
+str(data)
+```
+
+```{r}
+summary(data)
+```
+
+# **Exploratory Data Analysis**
+
+- Different colours in the plots denote different regions of the United States.
+
+```{r}
+num_data<-data[,10:13]
+ggpairs(num_data,aes(colour=data$Region))+theme_bw()
+```
+
+- Standard Class seems to remain the preffered mode for shipment and it might be due to its prices being cheap.
+
+- Same day shipment remains the less as all companies don't offer same day delivery and it is very expensive so people don't prefer it.
+
+- Majority of shipment is done in the Western region of United States.
+
+- Office supplies are majorly shipped across the United States.
+
+```{r fig.width=10}
+p1<-ggplot(data)+geom_bar(aes(Ship.Mode,fill=Region),position = "dodge")+
+  theme(axis.text.x = element_text(angle=45,hjust=0.9))+xlab("Shipment Mode")+
+  ylab("Frequency")
+p2<-ggplot(data)+geom_bar(aes(Ship.Mode,fill=Segment),position="dodge")+
+  theme(axis.text.x = element_text(angle=45,hjust=0.9))+xlab("Shipment Mode")+
+  ylab("Frequency")
+p3<-ggplot(data)+geom_bar(aes(Ship.Mode,fill=Category),position="dodge")+
+  theme(axis.text.x = element_text(angle=45,hjust=0.9))+xlab("Shipment Mode")+
+  ylab("Frequency")
+grid.arrange(p1,p2,p3,nrow=2)
+```
+
+- Office supplies are most in demand in all segments. Furniture and Technological equipments are pretty close with each other on the basis of demand in the market.
+
+```{r}
+plot1<-ggplot(data)+geom_bar(aes(Segment,fill=Category),position="dodge")+ ylab("Frequency")
+plot1
+
+
+```
+
+- Consumer remains the major buyer of all goods in all regions.
+
+- West and East region are major byuers of good. Southern region has made least purchases.
+
+```{r,fig.width=10}
+pl1<-ggplot(data)+geom_bar(aes(Region,fill=Segment),position = "dodge")+ ylab("Frequency")
+pl2<-ggplot(data)+geom_bar(aes(Region,fill=Category),position="dodge")+ ylab("Frequency")
+grid.arrange(pl1,pl2,ncol=2)
+```
+
+- Major sales in Eastern and Western region, while Southern region region has least sale.
+
+```{r}
+seg_sale_region<-ggplot(data)+geom_col(aes(x=Segment,y=Sales,fill=Category))+facet_grid(.~Region)+
+  theme(axis.text.x = element_text(angle=45,hjust=0.9))
+seg_sale_region+ggtitle("Sales vs Segment(Region-Wise)")
+
+```
+
+```{r}
+region_sales<-ggplot(data)+geom_col(aes(x=Region,y=Sales,fill=Category))
+region_sales+ggtitle("Sales vs Region(Category-Wise)")
+```
+
+- There is major profit in sales of Technology. Office supplies is pretty close.
+
+- There seems to be less profit for furniture even though its sale seems to be pretty good.
+
+```{r}
+profit_sum<-data%>%group_by(Category)%>% summarise(Profits=sum(Profit))
+profit_sum
+profit_sum%>%ggplot()+geom_col(aes(x=Category,y=Profits),fill="#fc6203")+ggtitle("Profits vs Category")
+
+```
+
+- Most profitable region remains the Western region, which has highest amount of sales.
+
+- Most shocking thing is that, Southern region has least amount of sales, even then its profit is greater than central region.
+
+
+```{r}
+region_profit<-data%>% group_by(Region)%>% summarise(Profits=sum(Profit))
+region_profit
+region_profit%>%ggplot()+geom_col(aes(x=Region,y=Profits),fill="darkgreen")+ggtitle("Profits vs Region")
+```
+
+```{r}
+ggplot()+geom_col(data=region_profit,aes(x=Region,y=Profits),fill="green")+geom_col(data=data,aes(x=Region,y=Sales),fill="orange",alpha=0.5)+ggtitle("Profits/Sales vs Region")+ylab("Profits/Sales")
+```
+
+
+```{r}
+ggplot()+geom_col(data=profit_sum,aes(x=Category,y=Profits),fill="green")+geom_col(data=data,aes(x=Category,y=Sales),fill="red",alpha=0.5)+ylab("Profits/Sales vs Category")+ggtitle("Profits/Sales vs Category")
+```
+
+- Different kinds of sub categories under technology, office supplies and furniture.
+
+```{r,fig.height=8}
+ggplot(data)+geom_bar(aes(x=Segment,fill=Sub.Category),position = "dodge")
+```
+
+- Tables has good sales but it has significant amount of negative profit. Samecase with bookcases but to lesser extent.
+
+```{r, fig.height=6}
+subCategory_profit<-data%>%group_by(Sub.Category)%>%summarise(Profits=sum(Profit),Sale=sum(Sales))
+subCategory_profit%>%ggplot()+geom_col(aes(x=Sub.Category,y=Profits),fill="blue")+
+  geom_col(aes(x=Sub.Category,y=Sale),fill="orange",alpha=0.6)+
+  ggtitle("Profits/Sales vs Sub Category")+theme(axis.text.x = element_text(angle=45,hjust=0.9))
+
+```
+
+```{r}
+salesprofit_city<-data%>%group_by(City)%>%summarise(Sales=sum(Sales),Profit=sum(Profit))
+head(salesprofit_city)
+
+```
+
+- New York City has highest amount of sales as well as highest profit.
+
+- None of the cities with least amount of sale is featured in 5 cities with least profit. 
+
+- There is peculiar case of **Philadelphia** as well. It is featured in top 5 cities with highest sales but has least amount of profit.
+
+
+```{r}
+sale1<-salesprofit_city%>%slice_max(Sales,n=5)%>%ggplot()+geom_col(aes(x=City,y=Sales),fill="green")+
+  coord_flip()+ggtitle("Top 5 cities with highest sales")
+sale2<-salesprofit_city%>%slice_min(Sales,n=5)%>%ggplot()+geom_col(aes(x=City,y=Sales),fill="green")+
+  coord_flip()+ggtitle("Top 5 cities with least sales")
+profit1<-salesprofit_city%>%slice_max(Profit,n=5)%>%ggplot()+geom_col(aes(x=City,y=Profit),fill="orange")+
+  coord_flip()+ggtitle("Top 5 cities with max profit")
+profit2<-salesprofit_city%>%slice_min(Profit,n=5)%>%ggplot()+geom_col(aes(x=City,y=Profit),fill="orange")+
+  coord_flip()+ggtitle("Top 5 cities with least profit")
+grid.arrange(sale1,profit1,sale2,profit2,ncol=2)
+
+```
+
+- Looking at the data, region-wise there seems to be a general trend of decreasing discount leads to increase in profit
+
+```{r}
+ggplot(data)+geom_smooth(aes(x=Profit,y=Discount),colour="red")+facet_grid(.~Region)+
+  ggtitle("Profit vs Discount(Region-Wise)")
+```
+
+
+- There seems to be no relation with amount of discount and Quantity. There might be a weak linaerly increasing relationship between them.
+
+```{r}
+ggplot(data)+geom_smooth(aes(x=Quantity,y=Discount),colour="darkgreen")+facet_grid(.~Region)+
+  ggtitle("Quantity vs Discount(Region-Wise)")
+```
+
+- There is increase in profit with increase in quantity in general in all the regions. There might be a case of outlier in Central region
+
+```{r}
+ggplot(data)+geom_smooth(aes(x=Quantity,y=Profit),colour="orange")+facet_grid(.~Region)+
+  ggtitle("Quantity vs Profit(Region-Wise)")
+```
+
+
+# **Conclusions**
+
+1.**Standard Class** shipping mode remains the preffered choice. It may be due to its lesser price and everyone can afford it.
+
+2. **Office Supplies** is the most ordered category, while the furniture and technology are close to each other. This can also been seen through region-wise analysis.
+
+3. **Southern Region** of US has least amount of sales. Trying to increse the sales in Southern region through advertising or some other means will surely help. **Even though, Southern region has lesser amount of sale as compared to central region, it has higher profit as compared to central region**. Incresing sales there will definitely help.
+
+4. **Eastern region** has highest amount of sales as well as it has higher profit as well. Trying to increse sales there will also help.
+
+5. **Technological Services** bring in more amount of profit, even though its sale is somewhat lesser than furniture, it brings much more profit as compared to furniture. So R&D companies should work more on technological advancements.
+
+6. **Consumer Sector** has highest amount of profit.
+
+7. **Bringing in Discount schemes in southern region can help in incresing sales.**
+
+8. Companies should try to find out the reason for pecularity in the city of **Philadelphia**. It has one of the highest amount of sales but its profit is least among the cities of US.
+
+9. The above point also poses a question, is there a trend btween sales and profit. It does not seem like with increasing sales there is increase in profit. To support this statement, i can be clearly seen ih the top 5 plots thatg cities with least amount of sales are not feature in top 5 of least amount of profit.
+
+10. In general, if **discount** increases, the sale increases but profit decreases.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
